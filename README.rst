@@ -1,11 +1,13 @@
-USB CDC Class dual Virtual Serial Port
+XMOS: Composite USB device with dual Virtual Serial Port
+...........................................
 
 This application shows how to create a composite USB device with dual Virtual Serial Ports compliant to
 the standard USB Communications Device Class (CDC) on an XMOS multicore microcontroller.
 
-The USB Configuration Descriptor uses a Interface Association Descriptor to describe the 2 interfaces.
+The USB Configuration Descriptor uses an Interface Association Descriptor to describe the 2 interfaces.
 
 2 serial USB devices should enumerate under Win10.
+
 2 terminals can be connected, one to each port.
 
 Each COM port will write a header and then loopback the sent data.
