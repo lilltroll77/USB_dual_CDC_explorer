@@ -24,4 +24,4 @@ Required hardware
 This application is designed to run on an XMOS xCORE-200 series device.
 
 The example code provided with the application has been implemented and tested
-on the xCORE-200 explorerKIT.
+on the xCORE-200 explorerKIT with xTIMEcomposer ver. Community_14.3.2
