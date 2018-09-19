@@ -15,8 +15,8 @@ Each COM port will write a header and then loopback the sent data.
 Required tools and libraries
 ............................
 
-* xTIMEcomposer Tools - Version 14.0.0
-* XMOS USB library - Version 3.1.0
+* xTIMEcomposer Tools - Version 14.0.0 (minimum)
+* XMOS USB library - Version 3.1.0 (minimum)
 
 Required hardware
 .................
