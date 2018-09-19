@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <timer.h>
-#include "i2c.h"
 #include "xud_cdc.h"
 
 
@@ -35,7 +34,7 @@ void app_virtual_com_extended(client interface usb_cdc_interface cdc , char id)
                 cdc.read( data, bytes);
                 cdc.write(data, bytes);
             }
-            while( bytes >=512 );
+            while( bytes >512 );
 
             break;
         }

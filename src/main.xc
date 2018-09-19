@@ -3,7 +3,6 @@
 #include <platform.h>
 #include <xs1.h>
 #include "usb.h"
-#include "i2c.h"
 #include "xud_cdc.h"
 #include "app_virtual_com_extended.h"
 
@@ -29,8 +28,8 @@ int main() {
 
         on USB_TILE: Endpoint0(c_ep_out[0], c_ep_in[0]);
 
-        on USB_TILE: CdcEndpointsHandler(c_ep_in[1], c_ep_out[1], c_ep_in[2], cdc_data[0]);
-        on USB_TILE: CdcEndpointsHandler(c_ep_in[3], c_ep_out[2], c_ep_in[4], cdc_data[1]);
+        on USB_TILE: CdcEndpointsHandler(c_ep_in[CDC_NOTIFICATION_EP_NUM1], c_ep_out[CDC_DATA_RX_EP_NUM1], c_ep_in[CDC_DATA_TX_EP_NUM1], cdc_data[0]);
+        on USB_TILE: CdcEndpointsHandler(c_ep_in[CDC_NOTIFICATION_EP_NUM2], c_ep_out[CDC_DATA_RX_EP_NUM2], c_ep_in[CDC_DATA_TX_EP_NUM2], cdc_data[1]);
 
         on tile[0]: app_virtual_com_extended(cdc_data[0] , 0);
         on tile[0]: app_virtual_com_extended(cdc_data[1] , 1);

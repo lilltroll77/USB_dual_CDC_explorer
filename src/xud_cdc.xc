@@ -21,25 +21,10 @@
 /* CDC interface descriptor type */
 #define USB_DESCTYPE_CS_INTERFACE   0x24
 
-/* Endpoint Addresses for CDC device */
-
-#define CDC_NOTIFICATION_INTERFACE1  0
-#define CDC_NOTIFICATION_EP_NUM1     1
-
-#define CDC_DATA_INTERFACE1          1
-#define CDC_DATA_RX_EP_NUM1          1
-#define CDC_DATA_TX_EP_NUM1          2
-
-#define CDC_NOTIFICATION_INTERFACE2  2
-#define CDC_NOTIFICATION_EP_NUM2     3
-
-#define CDC_DATA_INTERFACE2          3
-#define CDC_DATA_RX_EP_NUM2          2
-#define CDC_DATA_TX_EP_NUM2          4
 
 
 /* Data endpoint packet size */
-#define MAX_EP_SIZE     512
+#define MAX_EP_SIZE     4096
 
 /* CDC Communications Class requests */
 #define CDC_SET_LINE_CODING         0x20

@@ -8,6 +8,23 @@
 
 #define DEBUG 0
 
+// USB interface and channel declaration.
+//Channel ends must match the interfaces in the USB Configuration Descriptor
+#define CDC_NOTIFICATION_INTERFACE1  0
+#define CDC_NOTIFICATION_EP_NUM1     1
+
+#define CDC_DATA_INTERFACE1          1
+#define CDC_DATA_RX_EP_NUM1          1
+#define CDC_DATA_TX_EP_NUM1          2
+
+#define CDC_NOTIFICATION_INTERFACE2  2
+#define CDC_NOTIFICATION_EP_NUM2     3
+
+#define CDC_DATA_INTERFACE2          3
+#define CDC_DATA_RX_EP_NUM2          2
+#define CDC_DATA_TX_EP_NUM2          4
+
+
 interface usb_cdc_interface {
 
 
