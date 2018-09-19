@@ -15,8 +15,8 @@ Each COM port will write a header and then loopback the sent data.
 Required tools and libraries
 ............................
 
-* xTIMEcomposer Tools - Version 14.0.0
-* XMOS USB library - Version 3.1.0
+* xTIMEcomposer Tools - Version 14.0.0 (minimum)
+* XMOS USB library - Version 3.1.0 (minimum)
 
 Required hardware
 .................
@@ -24,4 +24,4 @@ Required hardware
 This application is designed to run on an XMOS xCORE-200 series device.
 
 The example code provided with the application has been implemented and tested
-on the xCORE-200 explorerKIT.
+on the xCORE-200 explorerKIT with xTIMEcomposer ver. Community_14.3.2
