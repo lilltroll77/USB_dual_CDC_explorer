@@ -26,6 +26,11 @@ This application is designed to run on an XMOS xCORE-200 series device.
 The example code provided with the application has been implemented and tested
 on the xCORE-200 explorerKIT with xTIMEcomposer ver. Community_14.3.2 running on Microsoft Windows 10 Home 64-bit [Version 10.0.17134.345]
 
+Required settings
+.................
+Important: To run the code the "xSCOPE ( via xCONNECT/UART)" must be selected in Run Configuration. Otherwise the JTAG will disrupt realtime operation if anything is written to stdio (printf, print etc). 
+Any call to stdio using JTAG mode instead of the xCONNECT mode will make the usb services to fail.
+
 For Windows 8.1 and earlier versions
 .....................................
 In Windows 8.1 and earlier versions of the operating system, Usbser.sys is not automatically loaded when a USB-to-serial device is attached to a computer. To load the driver, you need to write an INF that references the modem INF (mdmcpq.inf) by using the Include directive. The directive is required for instantiating the service, copying inbox binaries, and registering a device interface GUID that applications require to find the device and talk to it. That INF specifies "Usbser" as a lower filter driver in a device stack.
