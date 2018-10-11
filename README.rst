@@ -24,7 +24,7 @@ Required hardware
 This application is designed to run on an XMOS xCORE-200 series device.
 
 The example code provided with the application has been implemented and tested
-on the xCORE-200 explorerKIT with xTIMEcomposer ver. Community_14.3.2
+on the xCORE-200 explorerKIT with xTIMEcomposer ver. Community_14.3.2 running on Microsoft Windows 10 Home 64-bit [Version 10.0.17134.345]
 
 For Windows 8.1 and earlier versions
 .....................................
