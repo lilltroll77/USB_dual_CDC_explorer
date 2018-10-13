@@ -6,10 +6,12 @@
 #include "usb.h"
 #include "xud_cdc.h"
 
+
+#define UPDATE 0
 /* USB CDC device product defines */
 #define BCD_DEVICE  0x0100
-#define VENDOR_ID   0x20B1
-#define PRODUCT_ID  0x0401
+#define VENDOR_ID   0x20B0
+#define PRODUCT_ID  (0x0400 + N_CDC)
 
 //Interface Association Descriptor
 #define USB_IAD 0x0B
@@ -34,15 +36,16 @@
 
 /* Definition of Descriptors */
 /* USB Device Descriptor */
+
 static unsigned char devDesc[] =
 {
     0x12,                  /* 0  bLength */
     USB_DESCTYPE_DEVICE,   /* 1  bdescriptorType - Device*/
     0x00,                  /* 2  bcdUSB version */
     0x02,                  /* 3  bcdUSB version */
-    0xEF,                  /* 4  bDeviceClass - USB CDC Class */
-    0x02,                  /* 5  bDeviceSubClass  - Specified by interface */
-    0x01,                  /* 6  bDeviceProtocol  - Specified by interface */
+    0xEF,                  /* 4  bDeviceClass IAD*/
+    0x02,                  /* 5  bDeviceSubClass  -   IAD  */
+    0x01,                  /* 6  bDeviceProtocol  -   IAD  */
     0x40,                  /* 7  bMaxPacketSize for EP0 - max = 64*/
     (VENDOR_ID & 0xFF),    /* 8  idVendor */
     (VENDOR_ID >> 8),      /* 9  idVendor */
@@ -56,16 +59,264 @@ static unsigned char devDesc[] =
     0x01                   /* 17 bNumConfigurations */
 };
 
-#define CFG_LEN 0x8D
-#define STRINGINDEX 0x00
 
-/* USB Configuration Descriptor */
-static unsigned char cfgDesc[] = {
+
+static unsigned char IAD[]={
+        //Interface Association Descriptor1
+          0x08,                         //bLength
+          USB_IAD,                      // bDescriptorType
+          UPDATE,                       // BYTE  bFirstInterface !!UPDATE@2!!
+          0x02,                         //bInterfaceCount
+          USB_CLASS_COMMUNICATIONS,     // bFunctionClass
+          USB_CDC_ACM_SUBCLASS,         // bFunctionSubClass
+          USB_CDC_AT_COMMAND_PROTOCOL,   //bFunctionProtocol
+          0x00                           // Interface string index
+};
+
+static unsigned char CDC[]={
+        /* CDC Communication interface */
+           0x09,                       /* 0  bLength */
+           USB_DESCTYPE_INTERFACE,     /* 1  bDescriptorType - Interface */
+           UPDATE ,                    /* 2  bInterfaceNumber - Interface 0 */ //!!UPDATE@2!!
+           0x00,                       /* 3  bAlternateSetting */
+           0x01,                       /* 4  bNumEndpoints */
+           USB_CLASS_COMMUNICATIONS,   /* 5  bInterfaceClass */
+           USB_CDC_ACM_SUBCLASS,       /* 6  bInterfaceSubClass - Abstract Control Model */
+           USB_CDC_AT_COMMAND_PROTOCOL,/* 7  bInterfaceProtocol - AT Command V.250 protocol */
+           0x00,                       /* 8  iInterface - No string descriptor */
+
+           /* Header Functional descriptor */
+ /*9*/     0x05,                      /* 0  bLength */
+           USB_DESCTYPE_CS_INTERFACE, /* 1  bDescriptortype, CS_INTERFACE */
+           0x00,                      /* 2  bDescriptorsubtype, HEADER */
+           0x10, 0x01,                /* 3  bcdCDC */
+
+           /* ACM Functional descriptor */
+/*14*/     0x04,                      /* 0  bLength */
+           USB_DESCTYPE_CS_INTERFACE, /* 1  bDescriptortype, CS_INTERFACE */
+           0x02,                      /* 2  bDescriptorsubtype, ABSTRACT CONTROL MANAGEMENT */
+           0x02,                      /* 3  bmCapabilities: Supports subset of ACM commands */
+
+           /* Union Functional descriptor */
+/*18*/     0x05,                     /* 0  bLength */
+           USB_DESCTYPE_CS_INTERFACE,/* 1  bDescriptortype, CS_INTERFACE */
+           0x06,                     /* 2  bDescriptorsubtype, UNION */
+           UPDATE ,                  /* 3  bControlInterface - Interface 2 */  //!!UPDATE@21!!
+           UPDATE ,                  /* 4  bSubordinateInterface0 - Interface 3 */ //!!UPDATE@22!!
+
+           /* Call Management Functional descriptor */
+/*23*/     0x05,                     /* 0  bLength */
+           USB_DESCTYPE_CS_INTERFACE,/* 1  bDescriptortype, CS_INTERFACE */
+           0x01,                     /* 2  bDescriptorsubtype, CALL MANAGEMENT */
+           0x03,                     /* 3  bmCapabilities, DIY */
+           UPDATE               ,      /* 4  bDataInterface */
+
+           /* Notification Endpoint descriptor */
+/*28*/     0x07,                         /* 0  bLength */
+           USB_DESCTYPE_ENDPOINT,        /* 1  bDescriptorType */
+           (UPDATE | 0x80),              /* 2  bEndpointAddress */ //!!UPDATE@30!!
+           0x03,                         /* 3  bmAttributes */
+           0x40,                         /* 4  wMaxPacketSize - Low */
+           0x00,                         /* 5  wMaxPacketSize - High */
+           0xFF,                         /* 6  bInterval */
+
+           /* CDC Data interface */
+/*35*/     0x09,                     /* 0  bLength */
+           USB_DESCTYPE_INTERFACE,   /* 1  bDescriptorType */
+           UPDATE ,                  /* 2  bInterfacecNumber */ //!!UPDATE@37!!
+           0x00,                     /* 3  bAlternateSetting */
+           0x02,                     /* 4  bNumEndpoints */
+           USB_CLASS_CDC_DATA,       /* 5  bInterfaceClass */
+           0x00,                     /* 6  bInterfaceSubClass */
+           0x00,                     /* 7  bInterfaceProtocol*/
+           0x00,                     /* 8  iInterface - No string descriptor*/
+
+           /* Data OUT Endpoint descriptor */
+/*44*/     0x07,                     /* 0  bLength */
+           USB_DESCTYPE_ENDPOINT,    /* 1  bDescriptorType */
+           UPDATE ,                  /* 2  bEndpointAddress */ //!!UPDATE@46!!
+           0x02,                     /* 3  bmAttributes */
+           0x00,                     /* 4  wMaxPacketSize - Low */
+           0x02,                     /* 5  wMaxPacketSize - High */
+           0x00,                     /* 6  bInterval */
+
+           /* Data IN Endpoint descriptor */
+/*51*/     0x07,                     /* 0  bLength */
+           USB_DESCTYPE_ENDPOINT,    /* 1  bDescriptorType */
+           (UPDATE  | 0x80),            /* 2  bEndpointAddress */ //!!UPDATE@53!!
+           0x02,                     /* 3  bmAttributes */
+           0x00,                     /* 4  wMaxPacketSize - Low byte */
+           0x02,                     /* 5  wMaxPacketSize - High byte */
+           0x01                      /* 6  bInterval */
+};
+
+
+#define CFG_LEN (9 + N_CDC*(sizeof(IAD) + sizeof(CDC)))
+static unsigned char cfgDesc[CFG_LEN]={
+        0x09,                       /* 0  bLength */
+        USB_DESCTYPE_CONFIGURATION, /* 1  bDescriptortype - Configuration*/
+        (CFG_LEN & 0xFF), CFG_LEN>>8,  /* 2  wTotalLength */
+        2*N_CDC,                       /* 4  bNumInterfaces */
+        0x01,                       /* 5  bConfigurationValue */
+        0x00,                       /* 6  iConfiguration - index of string */
+        0x80,                       /* 7  bmAttributes - Bus powered */
+        0xC8,                       /* 8  bMaxPower - 400mA */
+};
+
+
+
+
+struct type_t{
+    unsigned char notification;
+    unsigned char rx;
+    unsigned char tx;
+    unsigned char data;
+};
+
+struct CDC_t{
+    struct type_t intf;
+    struct type_t EP;
+};
+
+unsafe unsigned char* unsafe writeIAD(unsigned char* unsafe ptr , unsigned char intf){
+    memcpy(ptr , IAD , sizeof(IAD));
+    ptr[2]=intf; //bFirstInterface
+    return ptr+sizeof(IAD);
+}
+
+unsafe unsigned char* unsafe writeCDC(unsigned char* unsafe ptr , struct CDC_t cdc){
+    memcpy(ptr , CDC , sizeof(CDC));
+    ptr[2]= cdc.intf.notification;
+    ptr[21]=cdc.intf.notification;
+    ptr[22]=cdc.intf.data;
+    ptr[27]=cdc.intf.data;
+    ptr[30]=cdc.EP.notification| 0x80;
+    ptr[37]=cdc.intf.data;
+    ptr[46]=cdc.EP.rx;
+    ptr[53]=cdc.EP.tx | 0x80;
+    return ptr+sizeof(CDC);
+
+    /* CDC Communication interface */
+
+
+}
+
+
+
+
+unsafe{
+  /* String table - unsafe as accessed via shared memory */
+  static char * unsafe stringDescriptors[]=
+  {
+    "\x09\x04",             /* Language ID string (US English) */
+    "XMOS",                 /* iManufacturer */
+    "CDC Virtual COM Port", /* iProduct */
+    "0123456789"            /* iSerialNumber */
+    "Config",               /* iConfiguration string */
+  };
+}
+
+/* CDC Class-specific requests handler function */
+XUD_Result_t ControlInterfaceClassRequests(XUD_ep ep_out, XUD_ep ep_in, USB_SetupPacket_t sp)
+{
+    /* Word aligned buffer */
+    unsigned int buffer[32];
+    unsigned length;
+    XUD_Result_t result;
+
+    static struct LineCoding {
+        unsigned int baudRate;
+        unsigned char charFormat;
+        unsigned char parityType;
+        unsigned char dataBits;
+    }lineCoding;
+
+    static struct lineState {
+        unsigned char dtr;
+        unsigned char rts;
+    } lineState;
+
+#if defined (DEBUG) && (DEBUG == 1)
+    printhexln(sp.bRequest);
+#endif
+
+    switch(sp.bRequest)
+    {
+        case CDC_SET_LINE_CODING:
+
+            if((result = XUD_GetBuffer(ep_out, (buffer, unsigned char[]), length)) != XUD_RES_OKAY)
+            {
+                return result;
+            }
+
+            lineCoding.baudRate = buffer[0];    /* Read 32-bit baud rate value */
+            lineCoding.charFormat = (buffer, unsigned char[])[4]; /* Read one byte */
+            lineCoding.parityType = (buffer, unsigned char[])[5];
+            lineCoding.dataBits = (buffer, unsigned char[])[6];
+
+            result = XUD_DoSetRequestStatus(ep_in);
+
+            #if defined (DEBUG) && (DEBUG == 1)
+            printf("Baud rate: %u\n", lineCoding.baudRate);
+            printf("Char format: %d\n", lineCoding.charFormat);
+            printf("Parity Type: %d\n", lineCoding.parityType);
+            printf("Data bits: %d\n", lineCoding.dataBits);
+            #endif
+            return result;
+
+            break;
+
+        case CDC_GET_LINE_CODING:
+
+            buffer[0] = lineCoding.baudRate;
+            (buffer, unsigned char[])[4] = lineCoding.charFormat;
+            (buffer, unsigned char[])[5] = lineCoding.parityType;
+            (buffer, unsigned char[])[6] = lineCoding.dataBits;
+
+            return XUD_DoGetRequest(ep_out, ep_in, (buffer, unsigned char[]), 7, sp.wLength);
+
+            break;
+
+        case CDC_SET_CONTROL_LINE_STATE:
+
+            /* Data present in wValue */
+            lineState.dtr = sp.wValue & 0x01;
+            lineState.rts = (sp.wValue >> 1) & 0x01;
+
+            /* Acknowledge */
+            result =  XUD_DoSetRequestStatus(ep_in);
+
+            #if defined (DEBUG) && (DEBUG == 1)
+            printf("DTR: %d\n", lineState.dtr);
+            printf("RTS: %d\n", lineState.rts);
+            #endif
+
+            return result;
+
+            break;
+
+        case CDC_SEND_BREAK:
+            /* Send break signal on UART (if requried) */
+            // sp.wValue says the number of milliseconds to hold in BREAK condition
+            return XUD_DoSetRequestStatus(ep_in);
+
+            break;
+
+        default:
+            // Error case
+            printstr("Unknown ControlInterfaceClassRequests");
+            printhexln(sp.bRequest);
+            break;
+    }
+    return XUD_RES_ERR;
+}
+#if(DEBUG)
+static unsigned char cfgDesc_ref[] = {
 
   0x09,                       /* 0  bLength */
   USB_DESCTYPE_CONFIGURATION, /* 1  bDescriptortype - Configuration*/
   CFG_LEN, 0x00,                 /* 2  wTotalLength */
-  0x04,                       /* 4  bNumInterfaces */
+  0x04,//!!                   /* 4  bNumInterfaces */ //!!
   0x01,                       /* 5  bConfigurationValue */
   0x00,                       /* 6  iConfiguration - index of string */
   0x80,                       /* 7  bmAttributes - Bus powered */
@@ -75,7 +326,7 @@ static unsigned char cfgDesc[] = {
   0x08,                         //bLength
   USB_IAD,                      //  bDescriptorType
   CDC_NOTIFICATION_INTERFACE1,  // BYTE  bFirstInterface
-  0x02,                         //bInterfaceCount
+  0x02,  //!!                       //bInterfaceCount
   USB_CLASS_COMMUNICATIONS,     // bFunctionClass
   USB_CDC_ACM_SUBCLASS,         // bFunctionSubClass
   USB_CDC_AT_COMMAND_PROTOCOL,   //bFunctionProtocol
@@ -245,120 +496,41 @@ static unsigned char cfgDesc[] = {
    0x02,                     /* 5  wMaxPacketSize - High byte */
    0x01                      /* 6  bInterval */
 };
-
-unsafe{
-  /* String table - unsafe as accessed via shared memory */
-  static char * unsafe stringDescriptors[]=
-  {
-    "\x09\x04",             /* Language ID string (US English) */
-    "XMOS",                 /* iManufacturer */
-    "CDC Virtual COM Port", /* iProduct */
-    "0123456789"            /* iSerialNumber */
-    "Config",               /* iConfiguration string */
-  };
-}
-
-/* CDC Class-specific requests handler function */
-XUD_Result_t ControlInterfaceClassRequests(XUD_ep ep_out, XUD_ep ep_in, USB_SetupPacket_t sp)
-{
-    /* Word aligned buffer */
-    unsigned int buffer[32];
-    unsigned length;
-    XUD_Result_t result;
-
-    static struct LineCoding {
-        unsigned int baudRate;
-        unsigned char charFormat;
-        unsigned char parityType;
-        unsigned char dataBits;
-    }lineCoding;
-
-    static struct lineState {
-        unsigned char dtr;
-        unsigned char rts;
-    } lineState;
-
-#if defined (DEBUG) && (DEBUG == 1)
-    printhexln(sp.bRequest);
 #endif
 
-    switch(sp.bRequest)
-    {
-        case CDC_SET_LINE_CODING:
-
-            if((result = XUD_GetBuffer(ep_out, (buffer, unsigned char[]), length)) != XUD_RES_OKAY)
-            {
-                return result;
-            }
-
-            lineCoding.baudRate = buffer[0];    /* Read 32-bit baud rate value */
-            lineCoding.charFormat = (buffer, unsigned char[])[4]; /* Read one byte */
-            lineCoding.parityType = (buffer, unsigned char[])[5];
-            lineCoding.dataBits = (buffer, unsigned char[])[6];
-
-            result = XUD_DoSetRequestStatus(ep_in);
-
-            #if defined (DEBUG) && (DEBUG == 1)
-            printf("Baud rate: %u\n", lineCoding.baudRate);
-            printf("Char format: %d\n", lineCoding.charFormat);
-            printf("Parity Type: %d\n", lineCoding.parityType);
-            printf("Data bits: %d\n", lineCoding.dataBits);
-            #endif
-            return result;
-
-            break;
-
-        case CDC_GET_LINE_CODING:
-
-            buffer[0] = lineCoding.baudRate;
-            (buffer, unsigned char[])[4] = lineCoding.charFormat;
-            (buffer, unsigned char[])[5] = lineCoding.parityType;
-            (buffer, unsigned char[])[6] = lineCoding.dataBits;
-
-            return XUD_DoGetRequest(ep_out, ep_in, (buffer, unsigned char[]), 7, sp.wLength);
-
-            break;
-
-        case CDC_SET_CONTROL_LINE_STATE:
-
-            /* Data present in wValue */
-            lineState.dtr = sp.wValue & 0x01;
-            lineState.rts = (sp.wValue >> 1) & 0x01;
-
-            /* Acknowledge */
-            result =  XUD_DoSetRequestStatus(ep_in);
-
-            #if defined (DEBUG) && (DEBUG == 1)
-            printf("DTR: %d\n", lineState.dtr);
-            printf("RTS: %d\n", lineState.rts);
-            #endif
-
-            return result;
-
-            break;
-
-        case CDC_SEND_BREAK:
-            /* Send break signal on UART (if requried) */
-            // sp.wValue says the number of milliseconds to hold in BREAK condition
-            return XUD_DoSetRequestStatus(ep_in);
-
-            break;
-
-        default:
-            // Error case
-            printhexln(sp.bRequest);
-            break;
-    }
-    return XUD_RES_ERR;
-}
 
 /* Endpoint 0 handling both std USB requests and CDC class specific requests */
 void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
 {
-    if(CFG_LEN != sizeof(cfgDesc)){
-        printstr("ERROR cfgDesc");
-        return;
+    struct CDC_t cdc;
+    unsafe{
+        //cfgDesc[4]=2*N_CDC;
+    unsigned char* unsafe ptr = &cfgDesc[9];
+    for(int i=0; i<N_CDC ; i++){
+        cdc.intf.notification=  2*i;
+        cdc.intf.data =         cdc.intf.notification+1;
+        cdc.EP.notification =   cdc.intf.notification+1;
+        cdc.EP.rx = i+1;
+        cdc.EP.tx = cdc.EP.notification+1;
+        ptr = writeIAD(ptr , cdc.intf.notification);
+        ptr = writeCDC(ptr , cdc);
     }
+    }
+
+#if(DEBUG)
+    for(int i=0 ; i<sizeof(cfgDesc_ref) ; i++)
+        if(cfgDesc_ref[i] != cfgDesc[i]){
+            int m=i-9 - sizeof(IAD);
+            printint(m);
+            printchar('(');
+            printuint(cfgDesc_ref[i]);
+            printchar(',');
+            printuint(cfgDesc[i]);
+            printchar(')');
+            printstr(" ERROR!");
+            printcharln(' ');
+        }
+#endif
 
     USB_SetupPacket_t sp;
 
@@ -399,15 +571,17 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
                 case USB_BMREQ_D2H_CLASS_INT:
                     /* Inspect for CDC Communications Class interface num */
 
-                    if((sp.wIndex == CDC_NOTIFICATION_INTERFACE1) || (sp.wIndex == CDC_NOTIFICATION_INTERFACE2))
+                    if( (sp.wIndex &1) == 0) // even numbers , odd is data
                     {
                         /* Returns  XUD_RES_OKAY if handled,
                          *          XUD_RES_ERR if not handled,
                          *          XUD_RES_RST for bus reset */
                         result = ControlInterfaceClassRequests(ep0_out, ep0_in, sp);
                     }
-                    else
-                        printint(sp.wIndex);
+                    else{
+                        printstr("USB Interface error in endpoint 0");
+                        printintln(sp.wIndex);
+                    }
                     break;
             }
         } /* if ends */
@@ -435,8 +609,8 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
 }
 
 /* Function to handle all endpoints of the CDC class excluding control endpoint0 */
-void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epbulk_in,
-                         SERVER_INTERFACE(usb_cdc_interface, cdc))
+void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epbulk_in
+                         /*,SERVER_INTERFACE(usb_cdc_interface, cdc)*/)
 {
     /*static*/ unsigned char txBuf[2][MAX_EP_SIZE];
     /*static*/ unsigned char rxBuf[2][MAX_EP_SIZE];
@@ -485,7 +659,7 @@ void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epb
                     * Say that another buffer is also waiting to be read */
                    readWaiting = 1;
                }
-               cdc.data_ready();
+               //cdc.data_ready();
            } else {
                XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
            }
@@ -505,100 +679,12 @@ void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epb
             }
 
             break;
-
-        /* Case handlers for CDC functions */
-        case (0 != rxLen[readBufId]) => cdc.read(unsigned char data[], REFERENCE_PARAM(unsigned, count)) -> int read_count:
-
-            /* Some data available to read */
-            if(count <= rxLen[readBufId]) {
-                /* Read only 'count' number of bytes */
-                memcpy(data, rxBuf[readBufId]+readIndex, count);
-                read_count = count;
-                readIndex += count;
-                rxLen[readBufId] -= count;
-
-            } else if(count > rxLen[readBufId]) {
-                /* Read all bytes from buffer */
-                memcpy(data, rxBuf[readBufId]+readIndex, rxLen[readBufId]);
-                read_count = rxLen[readBufId];
-                rxLen[readBufId] = 0;
-                readIndex = 0;
-            }
-
-            if(readWaiting && (rxLen[readBufId] == 0)) {
-                /* Other buffer is waiting to be read; switch it for reading */
-                readBufId = !readBufId;
-                readIndex = readWaiting = 0;
-                XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
+        default:
+            int count = rxLen[readBufId];
+            if(count != rxLen[readBufId]){
+                // process data here
             }
             break;
-
-        case (0 != rxLen[readBufId]) => cdc.get_char() -> unsigned char data:
-            /* Read one byte of data */
-            data = rxBuf[readBufId][readIndex++];
-            rxLen[readBufId]--;
-
-            if(readWaiting && (rxLen[readBufId] == 0)) {
-                /* Other buffer is waiting to be read; switch it for reading */
-                readBufId = !readBufId;
-                readIndex = readWaiting = 0;
-                XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
-            }
-            break;
-
-        case (MAX_EP_SIZE != txLen) => cdc.put_char(char byte):
-            txBuf[writeBufId][txLen] = byte;
-            txLen++;
-
-            /* Check if we can initiate transfer */
-            if(writeWaiting) {
-                XUD_SetReady_In(epbulk_in, txBuf[writeBufId], txLen);
-                writeBufId = !writeBufId;
-                txLen = 0;
-                writeWaiting = 0;
-            }
-            break;
-
-        case (MAX_EP_SIZE != txLen) => cdc.write(unsigned char data[], REFERENCE_PARAM(unsigned, length)) -> int write_count:
-
-            if((txLen + length) <= MAX_EP_SIZE) {
-                /* Enough space available to hold all data */
-                write_count = length;
-            } else {
-                /* Only partial data can be put into buffer */
-                write_count = MAX_EP_SIZE - txLen;
-            }
-            memcpy(txBuf[writeBufId] + txLen, data, write_count);
-            txLen += write_count;
-
-            /* Check if we can initiate transfer */
-            if(writeWaiting) {
-                XUD_SetReady_In(epbulk_in, txBuf[writeBufId], txLen);
-                writeBufId = !writeBufId;
-                txLen = 0;
-                writeWaiting = 0;
-            }
-            break;
-
-        case cdc.available_bytes() -> int count:
-            count = rxLen[readBufId];
-            break;
-
-        case cdc.flush_buffer():
-
-            /* Flush everything */
-            rxLen[readBufId] = 0;
-            readIndex = 0;
-
-            if(readWaiting) {
-                /* Other buffer is ready to be read, flush that too */
-                readBufId = !readBufId;
-                rxLen[readBufId] = 0;
-                readWaiting = 0;
-                XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
-            }
-            break;
-      }
+        } // select
     }
-
 }

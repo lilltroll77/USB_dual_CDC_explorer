@@ -8,6 +8,8 @@
 
 #define DEBUG 0
 
+#define N_CDC 4
+
 // USB interface and channel declaration.
 //Channel ends must match the interfaces in the USB Configuration Descriptor
 #define CDC_NOTIFICATION_INTERFACE1  0
@@ -48,7 +50,7 @@ interface usb_cdc_interface {
 void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in);
 
 /* Function to handle all endpoints of the CDC class excluding control endpoint0 */
-void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epbulk_in,
-                         SERVER_INTERFACE(usb_cdc_interface, cdc));
+void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epbulk_in);
+                        /*,SERVER_INTERFACE(usb_cdc_interface, cdc));*/
 
 #endif /* XUD_CDC_H_ */

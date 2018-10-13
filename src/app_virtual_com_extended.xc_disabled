@@ -9,7 +9,7 @@
 
 
 /* Application task */
-void app_virtual_com_extended(client interface usb_cdc_interface cdc , char id)
+[[distributable]] void app_virtual_com_extended(client interface usb_cdc_interface cdc , char id)
 {
     char data[512];
     unsigned t;
@@ -28,7 +28,7 @@ void app_virtual_com_extended(client interface usb_cdc_interface cdc , char id)
             }
             unsigned bytes;
             do{
-                bytes = cdc.available_bytes();
+                //bytes = cdc.available_bytes();
                 if(bytes > 512)
                     bytes=512;
                 cdc.read( data, bytes);
