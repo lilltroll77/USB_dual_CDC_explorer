@@ -22,9 +22,8 @@
 #define USB_DESCTYPE_CS_INTERFACE   0x24
 
 
-
 /* Data endpoint packet size */
-#define MAX_EP_SIZE     4096
+#define MAX_EP_SIZE  512
 
 /* CDC Communications Class requests */
 #define CDC_SET_LINE_CODING         0x20
@@ -355,6 +354,7 @@ XUD_Result_t ControlInterfaceClassRequests(XUD_ep ep_out, XUD_ep ep_in, USB_Setu
 /* Endpoint 0 handling both std USB requests and CDC class specific requests */
 void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
 {
+    set_core_high_priority_off();
     if(CFG_LEN != sizeof(cfgDesc)){
         printstr("ERROR cfgDesc");
         return;
@@ -438,6 +438,7 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
 void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epbulk_in,
                          SERVER_INTERFACE(usb_cdc_interface, cdc))
 {
+    set_core_high_priority_off();
     /*static*/ unsigned char txBuf[2][MAX_EP_SIZE];
     /*static*/ unsigned char rxBuf[2][MAX_EP_SIZE];
     int readBufId = 0, writeBufId = 0;          // used to identify buffer read/write by device
@@ -462,6 +463,8 @@ void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epb
 
     XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
 
+    int data_ready_size=1;
+
     while(1)
     {
       select
@@ -485,7 +488,8 @@ void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epb
                     * Say that another buffer is also waiting to be read */
                    readWaiting = 1;
                }
-               cdc.data_ready();
+               if( length >= data_ready_size )
+                   cdc.data_ready();
            } else {
                XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
            }
@@ -597,6 +601,9 @@ void CdcEndpointsHandler(chanend c_epint_in, chanend c_epbulk_out, chanend c_epb
                 readWaiting = 0;
                 XUD_SetReady_Out(epbulk_out, rxBuf[!readBufId]);
             }
+            break;
+        case cdc.data_ready_size(int bytes):
+            data_ready_size = bytes;
             break;
       }
     }

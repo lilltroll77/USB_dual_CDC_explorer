@@ -6,6 +6,8 @@
 #include <xccompat.h>
 #include "xud.h"
 
+
+
 #define DEBUG 0
 
 // USB interface and channel declaration.
@@ -30,6 +32,8 @@ interface usb_cdc_interface {
 
 
     [[guarded]] void put_char(char byte);
+
+    [[guarded]] void data_ready_size(int bytes);
 
     [[clears_notification]] [[guarded]] char get_char(void);
 
